@@ -1,0 +1,75 @@
+\documentclass{article}
+
+\begin{document}
+
+\title{Frankenstein Wordcloud}
+\author{William Taylor Bickelmann}
+\maketitle
+
+\begin{abstract}
+This PDF will contain a wordcloud and title of the book 'Alice in Wonderland' by Lewis Carroll.
+
+\end{abstract}
+
+\textit{Alice in Wonderland}
+
+\section{packages}
+This section will contain the packages which will then be used to load 'Alice in Wonderland', manipulate string and form wordclouds.
+
+<<>>=
+packages<-c('dplyr','tm','wordcloud','gutenbergr')
+knitr::write_bib(packages,file='packages.bib')
+library(tidytext)
+library(tm)
+library(wordcloud)
+library(stringr)
+library(dplyr)
+library(knitr)
+library(gutenbergr)
+@
+
+The first step is to determine the id of Alice in Wonderland:
+
+<<warning=FALSE,message=FALSE>>=
+
+gutenberg_works()%>%
+  select(gutenberg_id,title,author)%>%
+  filter(author=='Carroll, Lewis')
+@
+
+\noindent In the resulting tibble from the code above, one can pick out the id of Alice; 11.
+
+\section{Chapter 1}
+
+Here I want to isolate the 'chapter 1' block of text
+<<>>=
+library(stringr)
+df <- gutenberg_download(11)
+head(df[str_detect(df$text, '^CHAPTER'),],n=1)$text
+
+@
+
+
+\section{The Wordcloud}
+Next the wordcloud package will be used to form a wordcloud
+<<>>=
+words_df<-df%>%
+  unnest_tokens(word,text)
+
+words_df
+@
+
+Using dplyr, we can remove stop words and insignificant 
+<<>>=
+words_df<-words_df%>%
+  filter(!(word %in% stop_words$word))
+words_free <- words_df%>%
+  group_by(word)%>%
+  summarise(count = n())%>%
+  arrange(-count)
+
+wordcloud(words_free$word, words_free$count, min.freq = 25)
+@
+
+
+\end{document}

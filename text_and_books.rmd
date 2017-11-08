@@ -1,0 +1,45 @@
+---
+title: "Sentiment Analysis"
+author: "William Taylor Bickelmann"
+date: 2017-10-09T21:13:14-05:00
+output: html_document
+---
+loading packages of interest
+```{r}
+library(tidytext)
+library(stringr)
+library(dplyr)
+library(gutenbergr)
+library(wordcloud)
+library(tm)
+```
+
+Downloading Book of Interest
+```{r}
+gutenberg_works(str_detect(title,"Dracula"))
+dracula<-gutenberg_download(345)
+```
+
+Isolating what senitment words are
+```{r}
+nrc<-get_sentiments('nrc')
+nrc_fear<-nrc%>%
+  filter(sentiment=='fear')
+```
+
+Inner Join dracula words with fear words
+```{r}
+dracula_fear_words<-dracula%>%
+  unnest_tokens(word,text)
+dracula_fear_words<-inner_join(nrc_fear,dracula_fear_words)
+```
+making a wordcloud
+
+```{r}
+wrd<-dracula_fear_words%>%
+  select(word)%>%
+  group_by(word)%>%
+  summarize(count=n())
+
+wordcloud(wrd$word,wrd$count,min.freq = 25)
+```
